@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador AICC - Simulador Completo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { height: 100vh; overflow: hidden; background-color: #f4f5f7; }
+
+        /* ==================== PANTALLA DE LOGIN ==================== */
+        #login-screen { display: flex; height: 100vh; background-color: #ffffff; }
+        .image-section { flex: 1; background-image: url('https://images.unsplash.com/photo-1534536281715-e28d76689b4d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'); background-size: cover; background-position: center; }
+        .login-section { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; position: relative; }
+        .language-selector { position: absolute; top: 20px; right: 40px; font-size: 14px; color: #666; cursor: pointer; }
+        .login-box { width: 100%; max-width: 400px; }
+        .logo-header { display: flex; align-items: center; margin-bottom: 40px; }
+        .logo-icon { width: 40px; height: 40px; background-color: #3b82f6; border-radius: 50%; margin-right: 15px; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 20px; }
+        .logo-text h2 { font-size: 20px; color: #333; font-weight: 600; }
+        .logo-text p { font-size: 13px; color: #888; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; }
+        .input-group label span { color: red; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper input { width: 100%; padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; outline: none; }
+        .input-wrapper input:focus { border-color: #3b82f6; }
+        .input-wrapper .icon { position: absolute; left: 10px; color: #aaa; font-size: 16px; }
+        .captcha-container { display: flex; align-items: center; gap: 10px; }
+        .captcha-input { flex: 1; }
+        .captcha-image-mock { width: 100px; height: 38px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-family: monospace; font-size: 24px; font-weight: bold; color: #333; letter-spacing: 5px; text-decoration: line-through; text-decoration-color: rgba(0, 128, 0, 0.4); }
+        button.submit-btn { width: 100%; padding: 12px; background-color: #a7c0ff; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 10px; transition: 0.3s; pointer-events: none; }
+        button.submit-btn.active { background-color: #3b82f6; pointer-events: all; }
+        .footer { position: absolute; bottom: 20px; font-size: 11px; color: #999; text-align: center; width: 100%; }
+        #error-message { color: #dc2626; font-size: 13px; margin-top: 10px; text-align: center; display: none; }
+
+        /* ==================== PANTALLA DASHBOARD ==================== */
+        #dashboard-screen { display: none; height: 100vh; flex-direction: column; }
+        .topbar { height: 50px; background-color: #fff; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; position: relative;}
+        .topbar-left { display: flex; align-items: center; gap: 20px; }
+        .dash-logo { display: flex; align-items: center; font-weight: 600; color: #333; }
+        .dash-logo span { color: #3b82f6; font-size: 20px; margin-right: 8px; }
+        
+        #header-action-area { display: flex; align-items: center; gap: 15px; position: relative; }
+        .openeye-wrapper { display: flex; align-items: center; position: relative; }
+        .btn-openeye-main { background-color: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 15px 0 0 15px; font-size: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px;}
+        .btn-openeye-main:hover { background-color: #2563eb; }
+        .btn-openeye-arrow { background-color: #3b82f6; color: white; border: none; border-left: 1px solid #2563eb; padding: 6px 8px; border-radius: 0 15px 15px 0; font-size: 10px; cursor: pointer; transition: 0.2s;}
+        .btn-openeye-arrow:hover { background-color: #2563eb; }
+        .openeye-dropdown { position: absolute; top: 100%; right: 0; margin-top: 5px; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 140px; display: none; flex-direction: column; z-index: 2000; padding: 5px 0;}
+        .openeye-dropdown.show { display: flex; }
+        .btn-cerrar { background-color: #fff; color: #555; border: 1px solid #d1d5db; padding: 4px 12px; border-radius: 15px; font-size: 12px; cursor: pointer; }
+        
+        .status-wrapper { position: relative; }
+        .status-recap { font-size: 12px; color: #333; display: flex; align-items: center; gap: 8px; font-weight: 500; padding: 6px 10px; cursor: pointer; border-radius: 4px; transition: background 0.2s; border: 1px solid #e5e7eb; border-radius: 15px;}
+        .status-recap:hover { background-color: #f9fafb; }
+        .status-recap span.dot { color: #f59e0b; font-size: 10px; }
+        .status-recap span.arrow { font-size: 10px; color: #888; }
+        .status-dropdown { position: absolute; top: 100%; left: 0; margin-top: 5px; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 180px; display: none; flex-direction: column; z-index: 2000; padding: 5px 0;}
+        .status-dropdown.show { display: flex; }
+        .dropdown-item { padding: 10px 15px; font-size: 12px; color: #374151; cursor: pointer; display: flex; align-items: center; gap: 10px; position: relative; }
+        .dropdown-item:hover { background-color: #f9fafb; }
+        .dropdown-item span.dot { font-size: 10px; }
+        .dropdown-arrow { margin-left: auto; color: #aaa; font-size: 10px; }
+        .status-submenu { position: absolute; top: 0; left: 100%; margin-left: 2px; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 280px; display: none; flex-direction: column; z-index: 2001; padding: 5px 0;}
+        .dropdown-item.has-submenu:hover .status-submenu { display: flex; }
+        .submenu-item { padding: 10px 15px; font-size: 12px; color: #374151; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .submenu-item:hover { background-color: #f9fafb; }
+
+        .call-control-center { position: absolute; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 20px; }
+        .topbar-right { display: flex; align-items: center; gap: 15px; font-size: 13px; color: #555; }
+        .user-profile-wrapper { position: relative; display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;}
+        .user-avatar { width: 28px; height: 28px; background-color: #1e3a8a; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px; }
+        .profile-dropdown { position: absolute; top: 100%; right: 0; margin-top: 10px; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 160px; display: none; flex-direction: column; z-index: 2000; padding: 5px 0;}
+        .profile-dropdown.show { display: flex; }
+        .profile-dropdown-item { padding: 10px 15px; font-size: 12px; color: #374151; cursor: pointer; }
+        .profile-dropdown-item:hover { background-color: #f9fafb; }
+
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 220px; background-color: #fff; border-right: 1px solid #e5e7eb; padding-top: 10px; display: flex; flex-direction: column; justify-content: space-between; transition: width 0.2s ease; }
+        .sidebar.collapsed { width: 50px; }
+        .sidebar.collapsed .menu-text, .sidebar.collapsed .menu-arrow { display: none; }
+        .sidebar.collapsed .menu-item { padding: 12px 0; justify-content: center; }
+        .menu-item { padding: 12px 20px; font-size: 13px; color: #4b5563; display: flex; align-items: center; gap: 10px; cursor: pointer; white-space: nowrap; overflow: hidden; }
+        .menu-item:hover { background-color: #f3f4f6; }
+        .menu-item.active { color: #3b82f6; font-weight: 500; background-color: #eff6ff; border-right: 3px solid #3b82f6; }
+        .menu-icon { width: 20px; text-align: center; }
+
+        .content-area { flex: 1; display: flex; flex-direction: column; background-color: #f4f5f7; position: relative; }
+        .tabs-container { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px 0 15px; background-color: #f4f5f7; }
+        .tabs { display: flex; gap: 5px; }
+        .tab { background-color: #e5e7eb; padding: 8px 15px; font-size: 13px; border-radius: 4px 4px 0 0; display: flex; align-items: center; gap: 8px; color: #6b7280; cursor: pointer; }
+        .tab.active { background-color: #fff; color: #3b82f6; border-top: 2px solid #3b82f6; font-weight: 500; box-shadow: 0 -1px 3px rgba(0,0,0,0.02); }
+        .btn-motivo { background-color: #fff; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 5px; color: #374151; cursor: pointer;}
+        .btn-motivo:hover { background-color: #f9fafb; }
+
+        .scroll-content { flex: 1; padding: 15px; overflow-y: auto; }
+
+        /* VISTAS */
+        #home-view { display: block; }
+        .welcome-card { background-color: #fff; padding: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .welcome-left { display: flex; align-items: center; gap: 15px; }
+        .welcome-avatar { width: 50px; height: 50px; background-color: #e0e7ff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; border: 2px solid #3b82f6; }
+        .welcome-text h3 { font-size: 18px; font-weight: 500; color: #111827; }
+        .welcome-stats { display: flex; gap: 30px; font-size: 12px; color: #6b7280; }
+        .stat-value { font-weight: 600; color: #111827; font-size: 13px; }
+        .dashboard-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 15px; }
+        .card { background-color: #fff; border-radius: 6px; padding: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 14px; font-weight: 600; color: #374151; }
+        .quick-entry-icon { width: 60px; height: 60px; background-color: #e6fcf5; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; color: #059669; margin-top: 10px; }
+        .quick-entry-icon p { font-size: 11px; margin-top: 5px; color: #374151; }
+        .tasks-tabs { display: flex; gap: 20px; border-bottom: 1px solid #e5e7eb; margin-bottom: 15px; }
+        .task-tab { padding-bottom: 8px; font-size: 13px; color: #6b7280; cursor: pointer; }
+        .task-tab.active { color: #3b82f6; border-bottom: 2px solid #3b82f6; font-weight: 500; }
+        .task-table { width: 100%; text-align: left; border-collapse: collapse; font-size: 12px; color: #4b5563; }
+        .task-table th { background-color: #f9fafb; padding: 10px; font-weight: 500; border-bottom: 1px solid #e5e7eb;}
+        .task-table td { padding: 40px 10px; text-align: center; color: #9ca3af; }
+
+        #audio-video-view { display: none; height: 100%; }
+        .av-grid { display: grid; grid-template-columns: 2.5fr 1.2fr 1.2fr 40px; gap: 15px; min-height: 100%; }
+        .av-main-panel { background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; }
+        .av-header { padding: 15px; font-weight: 600; font-size: 14px; color: #333; border-bottom: 1px solid #f4f5f7; }
+        .av-blank-space { flex: 1; background-color: #f9fafb; min-height: 500px;}
+        .av-footer-stats { padding: 12px 15px; font-size: 10px; color: #888; display: flex; gap: 20px; border-top: 1px solid #f4f5f7; background-color: #fff; border-radius: 0 0 6px 6px; }
+        .info-row { display: flex; margin-bottom: 12px; font-size: 12px; }
+        .info-label { width: 130px; color: #6b7280; line-height: 1.3;}
+        .info-val { color: #111827; font-weight: 500; flex: 1; word-wrap: break-word; overflow-wrap: break-word;}
+        .textarea-mock { background-color: #f9fafb; border-radius: 4px; padding: 10px; font-size: 12px; color: #9ca3af; min-height: 60px; margin-top: 10px;}
+        .floating-toolbar { display: flex; flex-direction: column; gap: 15px; align-items: center; padding-top: 10px; }
+        .tool-icon { width: 32px; height: 32px; background-color: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; color: #555; }
+        .tool-icon.blue { color: #3b82f6; }
+
+        /* Estilos Botones Transferencia */
+        .btn-transfer { width: 100%; padding: 8px 12px; background-color: #fff; border-radius: 4px; font-size: 12px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 8px;}
+        .btn-transfer.green { border: 1px solid #10b981; color: #047857; }
+        .btn-transfer.blue { border: 1px solid #3b82f6; color: #1d4ed8; }
+        .btn-transfer.gray { border: 1px solid #e5e7eb; color: #9ca3af; cursor: not-allowed; background-color: #f9fafb;}
+        .btn-transfer.yellow { border: 1px solid #fde047; color: #a16207; background-color: #fefce8; cursor: pointer; }
+        .btn-transfer.yellow:hover { background-color: #fef08a; }
+        .btn-transfer:hover:not(.gray):not(.yellow) { background-color: #f3f4f6; }
+
+        .inline-input { border: 1px solid #3b82f6; border-radius: 2px; padding: 2px 4px; font-size: 11px; outline: none; width: 90px; }
+        .save-icon { color: #10b981; font-weight: bold; cursor: pointer; margin-left: 5px;}
+
+        /* ==================== TOASTS ==================== */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
+        .toast-success-top { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background-color: #d1fae5; color: #065f46; padding: 10px 20px; border-radius: 4px; font-size: 13px; display: flex; align-items: center; gap: 10px; border: 1px solid #34d399; opacity: 0; transition: opacity 0.5s; z-index: 1000; pointer-events: none;}
+        .toast-descanso { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background-color: #d1fae5; color: #065f46; padding: 10px 25px; border-radius: 4px; font-size: 13px; display: flex; align-items: center; gap: 15px; border: 1px solid #a7f3d0; opacity: 0; transition: opacity 0.5s; z-index: 4000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* ==================== MODALES ==================== */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .modal-box { background-color: #fff; width: 480px; border-radius: 8px; padding: 25px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .modal-close { position: absolute; top: 10px; right: 15px; font-size: 18px; color: #9ca3af; cursor: pointer; }
+        .modal-close:hover { color: #4b5563; }
+        .modal-content-flex { display: flex; gap: 15px; margin-bottom: 25px; align-items: flex-start; }
+        .modal-icon-warning { width: 24px; height: 24px; min-width: 24px; background-color: #f59e0b; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; margin-top: 2px; }
+        .modal-text { font-size: 13px; color: #374151; line-height: 1.5; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        
+        .btn-cancel { padding: 6px 15px; border: 1px solid #d1d5db; background-color: #fff; color: #374151; border-radius: 4px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .btn-cancel:hover { background-color: #f3f4f6; }
+        .btn-ok { padding: 6px 18px; border: none; background-color: #3b82f6; color: white; border-radius: 4px; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .btn-ok:hover { background-color: #2563eb; }
+
+        .mobile-input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px; margin-bottom: 25px; font-size: 13px; outline: none; }
+        .mobile-input:focus { border-color: #3b82f6; }
+
+        /* Modal "Motivo de la llamada" */
+        .motivo-col { border: 1px solid #e5e7eb; border-radius: 6px; padding: 15px; height: 260px; overflow-y: auto; overflow-x: hidden;}
+        .motivo-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; display: block; }
+        .tree-root { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: #374151; margin-bottom: 10px; cursor: pointer; }
+        .tree-icon { width: 14px; height: 14px; background-color: #3b82f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 10px; border-radius: 2px; font-weight: bold;}
+        .tree-children { margin-left: 22px; display: flex; flex-direction: column; gap: 10px; }
+        .tree-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #4b5563; cursor: pointer; width: 100%;}
+        .tree-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tree-item input { margin: 0; cursor: pointer; }
+        
+        .selected-item { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px 10px; font-size: 11px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 5px; color: #374151; line-height: 1.4; word-wrap: break-word;}
+        .selected-item-text { flex: 1; }
+        .selected-item-delete { cursor: pointer; color: #9ca3af; font-size: 14px; }
+        .selected-item-delete:hover { color: #ef4444; }
+
+        .comentarios-area { width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px; font-size: 12px; resize: none; outline: none; height: 70px; color: #374151;}
+        .comentarios-area:focus { border-color: #3b82f6; }
+
+        /* Modal Verificación Identidad */
+        .table-verif { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px; text-align: left; }
+        .table-verif th { padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: 500;}
+        .table-verif td { padding: 10px 0; }
+        .verif-input { width: 90%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; outline:none; }
+        .verif-input:focus { border-color: #3b82f6; }
+
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="image-section"></div>
+        <div class="login-section">
+            <div class="language-selector">Español ˅</div>
+            <div class="login-box">
+                <div class="logo-header">
+                    <div class="logo-icon">☁</div>
+                    <div class="logo-text">
+                        <h2>Simulador AICC</h2>
+                        <p>Clear UI for Ultimate Service</p>
+                    </div>
+                </div>
+
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label><span>*</span> Cuenta</label>
+                        <div class="input-wrapper">
+                            <span class="icon">👤</span>
+                            <input type="text" id="username" placeholder="Cuenta" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label><span>*</span> Contraseña</label>
+                        <div class="input-wrapper">
+                            <span class="icon">🔒</span>
+                            <input type="password" id="password" placeholder="Contraseña" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Código de verificación</label>
+                        <div class="captcha-container">
+                            <div class="input-wrapper captcha-input">
+                                <span class="icon">🛡️</span>
+                                <input type="text" id="captcha" placeholder="Código de verificación" required onkeyup="checkInputs()">
+                            </div>
+                            <div class="captcha-image-mock">1988</div>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn" id="submitBtn">Iniciar Sesión</button>
+                    <div id="error-message">Credenciales o código incorrectos.</div>
+                </form>
+            </div>
+            <div class="footer">
+                Derechos de autor © 2026 Huawei Software Technologies Co., Ltd. Reservados todos los derechos.<br>
+                Declaración de privacidad de AICC | Configuration des cookies
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-screen">
+        
+        <div class="toast-success-top" id="toast-success">
+            <span>✅</span> El OpenEye se inicializa correctamente.
+        </div>
+        
+        <div class="toast-descanso" id="toast-descanso">
+            <span style="background-color: #22c55e; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; justify-content: center; align-items: center; font-size: 10px;">✓</span> 
+            El descanso se ha programado correctamente 
+            <span style="cursor:pointer; margin-left:15px; color:#aaa; font-weight: bold;" onclick="this.parentElement.style.opacity='0'">×</span>
+        </div>
+
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="dash-logo"><span>☁</span> Simulador AICC</div>
+                
+                <div id="header-action-area">
+                    <div class="openeye-wrapper">
+                        <button class="btn-openeye-main" id="btn-openeye-main" onclick="iniciarLlamada()">⟲ Iniciar sesión-OpenEye</button>
+                        <button class="btn-openeye-arrow" onclick="toggleOpenEyeDropdown(event)">˅</button>
+                        <div class="openeye-dropdown" id="openeye-dropdown">
+                            <div style="padding: 10px 15px; font-size: 11px; color: #6b7280; border-bottom: 1px solid #f4f5f7; margin-bottom: 5px;">Modo de registro</div>
+                            <div class="dropdown-item" style="padding-left: 30px;" onclick="hideAllDropdowns()">WebRTC</div>
+                            <div class="dropdown-item" style="color: #3b82f6;" onclick="hideAllDropdowns()"><span style="position: absolute; left: 10px;">✓</span> OpenEye</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="call-control-panel" class="call-control-center">
+                <div style="display:flex; align-items:center; gap:5px; color:#10b981; font-weight:600; font-size:14px;">
+                    <span style="border: 1px solid #10b981; border-radius:50%; width:20px; height:20px; display:flex; justify-content:center; align-items:center; font-size:10px;">📞</span> 966310655
+                </div>
+                <div style="display:flex; gap: 15px; color: #3b82f6; font-size: 16px;">
+                    <span style="cursor:pointer;">🔢</span>
+                    <span style="cursor:pointer;">🎤</span>
+                    <span style="cursor:pointer;">⏸️</span>
+                    <span style="cursor:pointer;">↪️</span>
+                    <span style="cursor:pointer;">👥</span>
+                    <span style="cursor:pointer;">📹</span>
+                </div>
+                <div style="display:flex; align-items:center; gap: 10px; border-left: 1px solid #e5e7eb; padding-left: 15px;">
+                    <span style="font-size: 12px; color:#374151; font-weight:500;" id="live-call-timer">00:00</span>
+                    <div style="background-color: #ef4444; color:white; width:28px; height:28px; border-radius:50%; display:flex; justify-content:center; align-items:center; cursor:pointer; font-size:12px;">📞</div>
+                </div>
+            </div>
+
+            <div class="topbar-right" id="topbar-right-area">
+                <span>📶</span>
+                <span>🌐 Español ˅</span>
+                <div class="user-profile-wrapper" onclick="toggleProfileDropdown(event)">
+                    <div class="user-avatar">👤</div>
+                    <span id="profile-name">Usuario De Prueba ˅</span>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-dropdown-item" onclick="hideAllDropdowns()">Centro personal</div>
+                        <div class="profile-dropdown-item" onclick="promptLogout()">Salida de sesión</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <aside class="sidebar" id="main-sidebar">
+                <div>
+                    <div class="menu-item active" id="menu-home"><span class="menu-icon">🏠</span> <span class="menu-text">Página de inicio</span></div>
+                    <div class="menu-item" id="menu-av"><span class="menu-icon">🎧</span> <span class="menu-text">Audio y vídeo</span></div>
+                    <div class="menu-item"><span class="menu-icon">📋</span> <span class="menu-text">Historial de contactos</span> <span class="menu-arrow" style="margin-left:auto">></span></div>
+                </div>
+                <div class="menu-item" style="margin-bottom: 20px;"><span class="menu-icon">⚙️</span> <span class="menu-text">Centro de configuración</span></div>
+            </aside>
+
+            <main class="content-area">
+                <div class="tabs-container">
+                    <div class="tabs" id="tab-list">
+                        <div class="tab active" id="tab-home">Página de inicio <span style="color:#aaa; cursor:pointer;">×</span></div>
+                    </div>
+                    <div id="tabs-action-buttons" style="display: flex; gap: 10px;">
+                        <button class="btn-motivo" id="btn-motivo" style="display: none;" onclick="showMotivoModal()">💬 Motivo de la llamada</button>
+                    </div>
+                </div>
+
+                <div class="scroll-content">
+                    <div id="home-view">
+                        <div class="welcome-card">
+                            <div class="welcome-left">
+                                <div class="welcome-avatar">👮‍♀️</div>
+                                <div class="welcome-text"><h3>Usuario De Prueba, Bienvenido de vuelta</h3></div>
+                            </div>
+                            <div class="welcome-stats">
+                                <div>Número actual de colas: <span class="stat-value">--</span></div>
+                                <div>Llamadas de hoy: <span class="stat-value">15</span></div>
+                                <div>Tiempo promedio de conversación: <span class="stat-value">24 m 0 s</span></div>
+                            </div>
+                        </div>
+                        <div class="dashboard-grid">
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                <div class="card"><div class="card-header">Entrada rápida ⚙️</div><div class="quick-entry-icon"><span>📅</span><p>Contacto</p></div></div>
+                                <div class="card" style="flex: 1;"><div class="tasks-tabs"><div class="task-tab active">Tarea de salida (0)</div><div class="task-tab">Mensaje (0)</div></div><table class="task-table"><thead><tr><th>Nombre de tarea</th><th>Unidad de organización</th><th>Tipo de tarea</th><th>Hora de inicio y finalización</th></tr></thead><tbody><tr><td colspan="4">Sin datos</td></tr></tbody></table></div>
+                            </div>
+                            <div class="card" style="min-height: 450px; display: flex; flex-direction: column;">
+                                <div class="card-header"><span>Centro de notificación 📢</span><span style="color: #3b82f6; font-size: 12px; cursor: pointer; font-weight: normal;">Más</span></div><div style="flex: 1; display: flex; justify-content: center; align-items: center; color: #9ca3af; font-size: 13px;">Sin datos</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="audio-video-view">
+                        </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="logoutModal">
+        <div class="modal-box" style="width: 450px;">
+            <span class="modal-close" onclick="closeLogoutModal()">×</span>
+            <div class="modal-content-flex">
+                <div class="modal-icon-warning">!</div>
+                <div class="modal-text">
+                    Las sesiones no estarán disponibles después de cerrar sesión. Está seguro de que lo hará?
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeLogoutModal()">Cancelar</button>
+                <button class="btn-ok" onclick="executeLogout()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="warningModal">
+        <div class="modal-box">
+            <span class="modal-close" onclick="closeWarningModal()">×</span>
+            <div class="modal-content-flex">
+                <div class="modal-icon-warning">!</div>
+                <div class="modal-text">
+                    El teléfono suave no se ha registrado con éxito en todos los nodos, lo que afectará la recepción normal de algunas llamadas. ¿Confirma cambiar al estado inactivo?
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeWarningModal()">Cancelar</button>
+                <button class="btn-ok" onclick="confirmAvailableState()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="mobileModal">
+        <div class="modal-box" style="width: 450px; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h3 style="font-size: 16px; font-weight: 600; color: #111827;">Conectado por móvil</h3>
+                <span class="modal-close" style="position: static;" onclick="closeMobileModal()">×</span>
+            </div>
+            <input type="text" class="mobile-input" placeholder="Número de llamada">
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeMobileModal()">Cancelar</button>
+                <button class="btn-ok" onclick="confirmMobileState()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="motivoModal">
+        <div class="modal-box" style="width: 650px; padding: 20px 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 14px; font-weight: 500; color: #111827;">Motivo de la llamada(Número llamado: <span id="motivo-numero">992481811</span>)</h3>
+                <span class="modal-close" style="position: static;" onclick="closeMotivoModal()">×</span>
+            </div>
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 1; overflow: hidden;">
+                    <span class="motivo-label">Todas las razones</span>
+                    <div class="motivo-col">
+                        <div class="tree-root" onclick="toggleTree()">
+                            <div class="tree-icon" id="tree-toggle-icon">-</div>
+                            RETENCIONES_MOVIL_GEA
+                        </div>
+                        <div class="tree-children" id="tree-children">
+                            <label class="tree-item" title="CANCELACIÓN DE LÍNEA - NO RETENIDO"><input type="checkbox" value="CANCELACIÓN DE LÍNEA - NO RETENIDO" onchange="updateSelectedReasons()"> <span>CANCELACIÓN DE LÍNEA - NO RETENIDO</span></label>
+                            <label class="tree-item" title="TRANSFERENCIA IMPROCEDENTE"><input type="checkbox" value="TRANSFERENCIA IMPROCEDENTE" onchange="updateSelectedReasons()"> <span>TRANSFERENCIA IMPROCEDENTE</span></label>
+                            <label class="tree-item" title="INTENCIÓN A PORTAR - RETENIDO - BITEL"><input type="checkbox" value="INTENCIÓN A PORTAR - RETENIDO - BITEL" onchange="updateSelectedReasons()"> <span>INTENCIÓN A PORTAR - RETENIDO - BITEL</span></label>
+                            <label class="tree-item" title="INTENCIÓN A PORTAR - RETENIDO - ENTEL"><input type="checkbox" value="INTENCIÓN A PORTAR - RETENIDO - ENTEL" onchange="updateSelectedReasons()"> <span>INTENCIÓN A PORTAR - RETENIDO - ENTEL</span></label>
+                            <label class="tree-item" title="NO SE INGRESA SOLICITUD"><input type="checkbox" value="NO SE INGRESA SOLICITUD" onchange="updateSelectedReasons()"> <span>NO SE INGRESA SOLICITUD</span></label>
+                            <label class="tree-item" title="INTENCIÓN A PORTAR - RETENIDO - MOVISTAR"><input type="checkbox" value="INTENCIÓN A PORTAR - RETENIDO - MOVISTAR" onchange="updateSelectedReasons()"> <span>INTENCIÓN A PORTAR - RETENIDO - MOVISTAR</span></label>
+                            <label class="tree-item" title="INTENCIÓN A PORTAR - NO RETENIDO - MOVISTAR"><input type="checkbox" value="INTENCIÓN A PORTAR - NO RETENIDO - MOVISTAR" onchange="updateSelectedReasons()"> <span>INTENCIÓN A PORTAR - NO RETENIDO - MOVISTAR</span></label>
+                            <label class="tree-item" title="INTENCIÓN A PORTAR - NO RETENIDO - ENTEL"><input type="checkbox" value="INTENCIÓN A PORTAR - NO RETENIDO - ENTEL" onchange="updateSelectedReasons()"> <span>INTENCIÓN A PORTAR - NO RETENIDO - ENTEL</span></label>
+                            <label class="tree-item" title="CANCELACIÓN DE LÍNEA - RETENIDO"><input type="checkbox" value="CANCELACIÓN DE LÍNEA - RETENIDO" onchange="updateSelectedReasons()"> <span>CANCELACIÓN DE LÍNEA - RETENIDO</span></label>
+                            <label class="tree-item" title="MIGRACIÓN A PREPAGO - RETENIDO"><input type="checkbox" value="MIGRACIÓN A PREPAGO - RETENIDO" onchange="updateSelectedReasons()"> <span>MIGRACIÓN A PREPAGO - RETENIDO</span></label>
+                            <label class="tree-item" title="INTENCIÓN A PORTAR - NO RETENIDO - BITEL"><input type="checkbox" value="INTENCIÓN A PORTAR - NO RETENIDO - BITEL" onchange="updateSelectedReasons()"> <span>INTENCIÓN A PORTAR - NO RETENIDO - BITEL</span></label>
+                            <label class="tree-item" title="MIGRACIÓN A PREPAGO - NO RETENIDO"><input type="checkbox" value="MIGRACIÓN A PREPAGO - NO RETENIDO" onchange="updateSelectedReasons()"> <span>MIGRACIÓN A PREPAGO - NO RETENIDO</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div style="flex: 1;">
+                    <span class="motivo-label" style="color:#ef4444;">*<span style="color:#6b7280;">Razones Seleccionadas</span></span>
+                    <div class="motivo-col" id="selected-reasons-container" style="border: 1px solid #e5e7eb; background-color: #fff;"></div>
+                </div>
+            </div>
+            <div style="margin-top: 15px; margin-bottom: 20px;">
+                <span class="motivo-label">Comentarios</span>
+                <textarea class="comentarios-area" placeholder="Por favor ingrese"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeMotivoModal()">Cancelar</button>
+                <button class="btn-ok" onclick="saveMotivoModal()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="docModal">
+        <div class="modal-box" style="width: 400px; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 15px; font-weight: 600; color: #111827;">Establecer documento ID</h3>
+                <span class="modal-close" style="position: static;" onclick="closeDocModal()">×</span>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="font-size: 12px; color: #ef4444;">* <span style="color: #6b7280;">Doc Identidad</span></label>
+                <input type="text" id="doc-input" class="mobile-input" style="margin-top: 5px; margin-bottom: 5px;" placeholder="Por favor ingrese" value="">
+                <div style="font-size: 10px; color: #ef4444;">Campos obligatorios</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeDocModal()">Cancelar</button>
+                <button class="btn-ok" onclick="saveDocModal()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="verificacionModal">
+        <div class="modal-box" style="width: 500px; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 15px; font-weight: 600; color: #111827;">Editar verificación de identidad</h3>
+                <span class="modal-close" style="position: static;" onclick="closeVerificacionModal()">×</span>
+            </div>
+            <table class="table-verif">
+                <thead>
+                    <tr>
+                        <th style="width: 40%;">Tipo de identidad</th>
+                        <th style="width: 40%;">Número</th>
+                        <th style="width: 20%; text-align: center;">Operación</th>
+                    </tr>
+                </thead>
+                <tbody id="verificacion-tbody">
+                    <tr id="verificacion-empty"><td colspan="3" style="text-align: center; padding: 20px 0; color: #9ca3af;">Sin datos</td></tr>
+                </tbody>
+            </table>
+            <div style="color: #3b82f6; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-bottom: 25px;" onclick="addVerificacionRow()">
+                <span style="font-size: 16px; font-weight:bold;">⊕</span> Adiciones
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeVerificacionModal()">Cancelar</button>
+                <button class="btn-ok" onclick="saveVerificacion()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timerInterval;
+        let activeCallTimer;
+        let currentCallNumber = "992481811";
+        let isVerified = false; 
+        let isMotivoSaved = false;
+
+        function generateRandomNumber(length) {
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += Math.floor(Math.random() * 10).toString();
+            }
+            return result;
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function hideAllDropdowns() {
+            const statusDropdown = document.getElementById('status-dropdown');
+            const statusArrow = document.getElementById('status-arrow');
+            if(statusDropdown) statusDropdown.classList.remove('show');
+            if(statusArrow) statusArrow.innerText = '˅';
+
+            const profileDropdown = document.getElementById('profile-dropdown');
+            if(profileDropdown) profileDropdown.classList.remove('show');
+
+            const openEyeDropdown = document.getElementById('openeye-dropdown');
+            if(openEyeDropdown) openEyeDropdown.classList.remove('show');
+        }
+
+        function toggleDropdown(event) {
+            if(event) event.stopPropagation();
+            const dropdown = document.getElementById('status-dropdown');
+            const wasOpen = dropdown && dropdown.classList.contains('show');
+            
+            hideAllDropdowns();
+            
+            if(!wasOpen && dropdown) {
+                dropdown.classList.add('show');
+                document.getElementById('status-arrow').innerText = '˄';
+            }
+        }
+
+        function toggleProfileDropdown(event) {
+            if(event) event.stopPropagation();
+            const dropdown = document.getElementById('profile-dropdown');
+            const wasOpen = dropdown && dropdown.classList.contains('show');
+            
+            hideAllDropdowns();
+            
+            if(!wasOpen && dropdown) dropdown.classList.add('show');
+        }
+
+        function toggleOpenEyeDropdown(event) {
+            if(event) event.stopPropagation();
+            const dropdown = document.getElementById('openeye-dropdown');
+            const wasOpen = dropdown && dropdown.classList.contains('show');
+            
+            hideAllDropdowns();
+            
+            if(!wasOpen && dropdown) dropdown.classList.add('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.status-wrapper') && 
+                !event.target.closest('.user-profile-wrapper') &&
+                !event.target.closest('.openeye-wrapper')) {
+                hideAllDropdowns();
+            }
+        }
+
+        function updateStatusUI(name, color, extraText = '') {
+            const statusWrapper = document.querySelector('.status-wrapper');
+            if(statusWrapper) {
+                const borderStyle = name === 'Hablar' ? 'border-color: transparent;' : '';
+                statusWrapper.innerHTML = `
+                    <div class="status-recap" style="${borderStyle}" onclick="toggleDropdown(event)">
+                        <span class="dot" style="color: ${color};">●</span> ${name} ${extraText} <span class="arrow" id="status-arrow">˅</span>
+                    </div>
+                    <div class="status-dropdown" id="status-dropdown">
+                        <div class="dropdown-item" onclick="event.stopPropagation(); showWarningModal()"><span class="dot" style="color: #22c55e;">●</span> Disponible</div>
+                        <div class="dropdown-item" onclick="event.stopPropagation(); showWarningModal()"><span class="dot" style="color: #ef4444;">●</span> Pausa</div>
+                        
+                        <div class="dropdown-item has-submenu" onclick="event.stopPropagation();">
+                            <span class="dot" style="color: #eab308;">●</span> Descanso <span class="dropdown-arrow">></span>
+                            <div class="status-submenu">
+                                <div class="submenu-item" onclick="startDescansoTimer(event, '10m', 600)"><span>Estado error aplicativo Claro</span><span>10m</span></div>
+                                <div class="submenu-item" onclick="startDescansoTimer(event, '10m', 600)"><span>Estado de Back Office</span><span>10m</span></div>
+                                <div class="submenu-item" onclick="startDescansoTimer(event, '10m', 600)"><span>Estado de Tiempo en SSHH</span><span>10m</span></div>
+                                <div class="submenu-item" onclick="startDescansoTimer(event, '10m', 600)"><span>Estado de Consulta a supervisor</span><span>10m</span></div>
+                                <div class="submenu-item" onclick="startDescansoTimer(event, '10m', 600)"><span>Estado de Feedback</span><span>10m</span></div>
+                                <div class="submenu-item" onclick="startDescansoTimer(event, '10m', 600)"><span>Estado de capacitación pagada por Claro</span><span>10m</span></div>
+                                <div class="submenu-item" onclick="startDescansoTimer(event, '10m', 600)"><span>Estado de capacitación no pagada por Claro</span><span>10m</span></div>
+                                <div class="submenu-item" onclick="startDescansoTimer(event, '1h', 3599)"><span>Estado de Almuerzo</span><span>1h</span></div>
+                            </div>
+                        </div>
+
+                        <div class="dropdown-item" onclick="event.stopPropagation(); showMobileModal()"><span class="dot" style="color: #3b82f6;">●</span> Conectado por móvil</div>
+                    </div>
+                `;
+            }
+        }
+
+        // ================= CERRAR SESIÓN =================
+        function promptLogout() {
+            hideAllDropdowns();
+            document.getElementById('logoutModal').style.display = 'flex';
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'none';
+        }
+
+        function executeLogout() {
+            closeLogoutModal();
+            clearInterval(timerInterval);
+            clearInterval(activeCallTimer);
+
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+
+            document.getElementById('password').value = '';
+            document.getElementById('captcha').value = '';
+            document.getElementById('submitBtn').classList.remove('active');
+            document.getElementById('submitBtn').innerText = 'Iniciar Sesión';
+            document.getElementById('error-message').style.display = 'none';
+
+            document.getElementById('home-view').style.display = 'block';
+            document.getElementById('audio-video-view').style.display = 'none';
+            
+            const tabAv = document.getElementById('tab-av');
+            if(tabAv) tabAv.remove();
+            
+            document.getElementById('tab-home').classList.add('active');
+            document.getElementById('tab-home').style.backgroundColor = '#fff';
+            document.getElementById('tab-home').style.color = '#3b82f6';
+            document.getElementById('tab-home').style.borderTop = '2px solid #3b82f6';
+
+            document.getElementById('header-action-area').innerHTML = `
+                <div class="openeye-wrapper">
+                    <button class="btn-openeye-main" id="btn-openeye-main" onclick="iniciarLlamada()">⟲ Iniciar sesión-OpenEye</button>
+                    <button class="btn-openeye-arrow" onclick="toggleOpenEyeDropdown(event)">˅</button>
+                    <div class="openeye-dropdown" id="openeye-dropdown">
+                        <div style="padding: 10px 15px; font-size: 11px; color: #6b7280; border-bottom: 1px solid #f4f5f7; margin-bottom: 5px;">Modo de registro</div>
+                        <div class="dropdown-item" style="padding-left: 30px;" onclick="hideAllDropdowns()">WebRTC</div>
+                        <div class="dropdown-item" style="color: #3b82f6;" onclick="hideAllDropdowns()"><span style="position: absolute; left: 10px;">✓</span> OpenEye</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('call-control-panel').style.display = 'none';
+            const phoneIcon = document.getElementById('green-phone-icon');
+            if(phoneIcon) phoneIcon.remove();
+
+            document.getElementById('main-sidebar').classList.remove('collapsed');
+            document.getElementById('menu-av').classList.remove('active');
+            document.getElementById('menu-home').classList.add('active');
+            
+            document.getElementById('btn-motivo').style.display = 'none';
+            isVerified = false;
+            isMotivoSaved = false;
+        }
+
+        // ================= FLUJO ESTADOS Y MODALES =================
+        function showWarningModal() {
+            hideAllDropdowns();
+            document.getElementById('warningModal').style.display = 'flex';
+        }
+
+        function closeWarningModal() {
+            document.getElementById('warningModal').style.display = 'none';
+        }
+
+        function confirmAvailableState() {
+            closeWarningModal();
+            clearInterval(timerInterval);
+            
+            updateStatusUI('Disponible', '#22c55e');
+
+            const topbarRight = document.getElementById('topbar-right-area');
+            if(!document.getElementById('green-phone-icon')) {
+                const phoneIcon = document.createElement('div');
+                phoneIcon.id = 'green-phone-icon';
+                phoneIcon.innerHTML = '<span style="background-color: #22c55e; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; display:flex; align-items:center; justify-content:center;">📞</span>';
+                topbarRight.insertBefore(phoneIcon, topbarRight.firstChild);
+            }
+
+            setTimeout(() => { triggerIncomingCall(); }, 2000);
+        }
+
+        function startDescansoTimer(event, label, secondsStart) {
+            if(event) event.stopPropagation();
+            hideAllDropdowns();
+
+            const toast = document.getElementById('toast-descanso');
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+
+            clearInterval(timerInterval);
+            let timeInSeconds = secondsStart;
+            
+            updateStatusUI('Descanso', '#eab308', formatTime(timeInSeconds));
+
+            timerInterval = setInterval(() => {
+                timeInSeconds--;
+                if(timeInSeconds <= 0) clearInterval(timerInterval);
+                updateStatusUI('Descanso', '#eab308', formatTime(timeInSeconds));
+            }, 1000);
+        }
+
+        function showMobileModal() {
+            hideAllDropdowns();
+            document.getElementById('mobileModal').style.display = 'flex';
+        }
+
+        function closeMobileModal() {
+            document.getElementById('mobileModal').style.display = 'none';
+        }
+
+        function confirmMobileState() {
+            closeMobileModal();
+            clearInterval(timerInterval);
+            updateStatusUI('Conectado por móvil', '#3b82f6');
+        }
+
+        // ================= MOTIVO DE LA LLAMADA =================
+        function showMotivoModal() {
+            document.getElementById('motivo-numero').innerText = currentCallNumber;
+            document.getElementById('motivoModal').style.display = 'flex';
+        }
+        
+        function closeMotivoModal() {
+            document.getElementById('motivoModal').style.display = 'none';
+        }
+
+        function saveMotivoModal() {
+            const checkboxes = document.querySelectorAll('#tree-children input[type="checkbox"]');
+            let hasSelection = Array.from(checkboxes).some(cb => cb.checked);
+            
+            if(hasSelection) {
+                isMotivoSaved = true;
+                closeMotivoModal();
+                checkEncuestaStatus();
+            } else {
+                alert("Debe seleccionar al menos una razón de la lista.");
+            }
+        }
+
+        function toggleTree() {
+            const children = document.getElementById('tree-children');
+            const icon = document.getElementById('tree-toggle-icon');
+            if(children.style.display === 'none') {
+                children.style.display = 'flex';
+                icon.innerText = '-';
+            } else {
+                children.style.display = 'none';
+                icon.innerText = '+';
+            }
+        }
+        
+        function updateSelectedReasons() {
+            const container = document.getElementById('selected-reasons-container');
+            container.innerHTML = '';
+            const checkboxes = document.querySelectorAll('#tree-children input[type="checkbox"]');
+            checkboxes.forEach((cb, index) => {
+                if(cb.checked) {
+                    const div = document.createElement('div');
+                    div.className = 'selected-item';
+                    div.innerHTML = `<div class="selected-item-text">RETENCIONES_MOVIL_GEA > ${cb.value}</div><div class="selected-item-delete" onclick="removeReason(${index})">🗑️</div>`;
+                    container.appendChild(div);
+                }
+            });
+        }
+        
+        function removeReason(index) {
+            const checkboxes = document.querySelectorAll('#tree-children input[type="checkbox"]');
+            if(checkboxes[index]) {
+                checkboxes[index].checked = false;
+                updateSelectedReasons();
+            }
+        }
+
+        // ================= EDICIÓN DOC IDENTIDAD =================
+        function openDocModal() {
+            document.getElementById('doc-input').value = '';
+            document.getElementById('docModal').style.display = 'flex';
+            document.getElementById('doc-input').focus();
+        }
+        
+        function closeDocModal() {
+            document.getElementById('docModal').style.display = 'none';
+        }
+        
+        function saveDocModal() {
+            const val = document.getElementById('doc-input').value.trim();
+            const container = document.getElementById('val-doc');
+            if(val) {
+                container.innerHTML = `${val} <span style="color:#aaa; cursor:pointer;" onclick="openDocModal()">✎</span>`;
+            } else {
+                container.innerHTML = `-- <span style="color:#aaa; cursor:pointer;" onclick="openDocModal()">✎</span>`;
+            }
+            closeDocModal();
+        }
+
+        // ================= VERIFICACIÓN DE IDENTIDAD =================
+        function openVerificacionModal() {
+            document.getElementById('verificacionModal').style.display = 'flex';
+        }
+        
+        function closeVerificacionModal() {
+            document.getElementById('verificacionModal').style.display = 'none';
+        }
+        
+        function addVerificacionRow() {
+            document.getElementById('verificacion-empty').style.display = 'none';
+            const tbody = document.getElementById('verificacion-tbody');
+            if(document.getElementById('verif-row')) return;
+
+            const tr = document.createElement('tr');
+            tr.id = 'verif-row';
+            tr.innerHTML = `
+                <td>
+                    <select id="verif-tipo" class="verif-input">
+                        <option value="">Seleccione ˅</option>
+                        <option value="SEC">SEC</option>
+                        <option value="INTERACCION">INTERACCION</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" id="verif-num" class="verif-input" maxlength="10" placeholder="Por favor ingrese" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </td>
+                <td style="text-align: center; color: #6b7280; font-size: 16px;">
+                    <span style="cursor: pointer; margin-right: 10px;" onclick="validateVerificacion()">☑</span>
+                    <span style="cursor: pointer;" onclick="removeVerificacionRow()">🗑</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+        
+        function validateVerificacion() {
+            const input = document.getElementById('verif-num');
+            if(input && input.value.length === 10) {
+                input.style.borderColor = '#10b981';
+            } else {
+                input.style.borderColor = '#ef4444';
+            }
+        }
+        
+        function removeVerificacionRow() {
+            const tr = document.getElementById('verif-row');
+            if(tr) tr.remove();
+            document.getElementById('verificacion-empty').style.display = 'table-row';
+        }
+        
+        function saveVerificacion() {
+            const tipo = document.getElementById('verif-tipo');
+            const num = document.getElementById('verif-num');
+            const container = document.getElementById('val-verificacion');
+            
+            if (tipo && num && tipo.value && num.value.length === 10) {
+                container.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:5px; width:100%; margin-top:2px;">
+                        <div style="display:flex; justify-content:space-between; color:#6b7280; font-size:11px;"><span>Tipo de identidad</span><span>Número</span></div>
+                        <div style="display:flex; justify-content:space-between; font-weight:500; color:#374151;"><span>${tipo.value}</span><span>${num.value}</span></div>
+                    </div>
+                `;
+                isVerified = true;
+                checkEncuestaStatus();
+            } else if (tipo || num) {
+                alert("Por favor ingrese un número de 10 dígitos y seleccione el tipo de identidad.");
+                return;
+            }
+            closeVerificacionModal();
+        }
+        
+        function checkEncuestaStatus() {
+            const btn = document.getElementById('btn-encuesta');
+            if(isVerified && isMotivoSaved && btn) {
+                btn.disabled = false;
+                btn.classList.remove('gray');
+                btn.classList.add('yellow');
+                btn.innerHTML = `<span style="color:#a16207; margin-right:5px; font-size:14px;">🙂</span> Transferencia a Encuesta`;
+                btn.setAttribute("onclick", "transferirEncuesta()");
+            } else if (btn) {
+                btn.disabled = true;
+                btn.classList.remove('yellow', 'neutral');
+                btn.classList.add('gray');
+                btn.innerHTML = `<span style="color:#9ca3af; margin-right:5px;">🎧</span> Transferencia a Encuesta`;
+                btn.removeAttribute("onclick");
+            }
+        }
+
+        // ================= TRANSFERIR ENCUESTA =================
+        function transferirEncuesta() {
+            clearInterval(activeCallTimer);
+            document.getElementById('call-control-panel').style.display = 'none';
+
+            updateStatusUI('Recapitulación', '#f59e0b', '00:00');
+
+            document.getElementById('tabs-action-buttons').innerHTML = `
+                <button class="btn-motivo" id="btn-motivo" style="display: none;" onclick="showMotivoModal()">💬 Motivo de la llamada</button>
+            `;
+
+            isVerified = false;
+            isMotivoSaved = false;
+            currentCallNumber = "966310***";
+
+            document.getElementById('audio-video-view').innerHTML = `
+                <div class="av-grid">
+                    <div class="av-main-panel" style="grid-column: span 1;">
+                        <div class="av-header">966310***</div>
+                        <div class="av-blank-space"></div>
+                        <div class="av-footer-stats">
+                            <span>Número de llamadas de inicio de sesión actuales: 17</span>
+                            <span>Duración promedio de llamadas: 1450</span>
+                            <span>Número de clientes en espera actuales: --</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="card">
+                            <div class="card-header">Información de la sesión</div>
+                            <div class="info-row"><div class="info-label">Llamante</div><div class="info-val">939370085</div></div>
+                            <div class="info-row"><div class="info-label">Llamado</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Número manejado</div><div class="info-val">966310***</div></div>
+                            <div class="info-row"><div class="info-label">Cola de habilidades</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">ID de llamada</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Nombre del proceso</div><div class="info-val">--</div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">Llamada de transferencia</div>
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 10px; color: #374151;">Transferir notas</div>
+                            <div style="font-size: 12px; color: #6b7280; margin-bottom: 5px;">Desde:</div>
+                            <div class="textarea-mock">Reenviar información</div>
+                        </div>
+                        <div class="card" style="flex: 1; display: flex; flex-direction: column; min-height: 250px;">
+                            <div class="card-header">Registros de contacto</div>
+                            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                                <div style="border: 1px solid #d1d5db; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #9ca3af; flex: 1; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Tipo de medios <span>˅</span></div>
+                                <div style="border: 1px solid #d1d5db; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #374151; display: flex; justify-content: space-between; align-items: center; gap: 5px; cursor: pointer;">Más <span>˅</span></div>
+                            </div>
+                            <div style="flex: 1; display: flex; justify-content: center; align-items: center; color: #9ca3af; font-size: 12px;">No hay datos disponibles.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="card">
+                            <div class="card-header">NPS Satisfacción</div>
+                            <div class="info-row"><div class="info-label">NPS1</div><div class="info-val">0.5</div></div>
+                            <div class="info-row"><div class="info-label">NPS2</div><div class="info-val">0.67</div></div>
+                            <div class="info-row" style="margin-top: 15px;"><div class="info-label">Transferir llamadas a<br>encuesta</div><div class="info-val">13</div></div>
+                            <div class="info-row" style="margin-top: 10px;"><div class="info-label">Proporción de<br>llamadas transferidas</div><div class="info-val">81.3%</div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">Transferir registro</div>
+                            <div style="border: 1px solid #f4f5f7; padding: 10px; border-radius: 6px; font-size:12px;">
+                                <div style="display:flex; margin-bottom:5px;"><div style="width:110px; color:#6b7280;">Cuenta de Agente</div><div style="font-weight:500;">E8713482</div></div>
+                                <div style="display:flex; margin-bottom:5px;"><div style="width:110px; color:#6b7280;">Nombre del agente</div><div style="font-weight:500;">Usuario De Prueba</div></div>
+                                <div style="display:flex; margin-bottom:5px;"><div style="width:110px; color:#6b7280;">Cola de habilidades:</div><div style="font-weight:500;">--</div></div>
+                                <div style="display:flex;"><div style="width:110px; color:#6b7280;">Tiempo</div><div style="font-weight:500;">2026-05-09 18:45:00</div></div>
+                            </div>
+                        </div>
+                        <div class="card" style="flex: 1;">
+                            <div class="card-header">Información del cliente</div>
+                            <div class="info-row"><div class="info-label">tipo de cliente</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Repetir llamadas a<br>clientes</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Nombre del cliente</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">ID de cliente</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">período de<br>facturación</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">SOT</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Resultado de<br>Aceptación de Baja</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Línea Cliente</div><div class="info-val">-- <span style="color:#aaa; cursor:pointer;">✎</span></div></div>
+                            <div class="info-row"><div class="info-label">Doc Identidad</div><div class="info-val">-- <span style="color:#aaa; cursor:pointer;" onclick="openDocModal()">✎</span></div></div>
+                        </div>
+                    </div>
+                    <div class="floating-toolbar"><div class="tool-icon blue">👤</div><div class="tool-icon" style="margin-top:20px;">⚙️</div></div>
+                </div>
+            `;
+        }
+
+        // ================= INICIAR SIMULACIÓN =================
+        function checkInputs() {
+            const captcha = document.getElementById('captcha').value;
+            const btn = document.getElementById('submitBtn');
+            if(captcha.length >= 4) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const captcha = document.getElementById('captcha').value;
+            const errorMsg = document.getElementById('error-message');
+
+            if (user === "E8713482" && pass === "Pancitoconpollo123*" && (captcha === "6453" || captcha === "1988")) {
+                errorMsg.style.display = 'none';
+                document.getElementById('submitBtn').innerText = "Iniciando sesión...";
+                
+                setTimeout(() => {
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('dashboard-screen').style.display = 'flex';
+
+                    setTimeout(() => { document.getElementById('toast-success').style.opacity = '1'; }, 500);
+                    setTimeout(() => { document.getElementById('toast-success').style.opacity = '0'; }, 4500);
+                }, 800); 
+            } else {
+                document.getElementById('submitBtn').innerText = "Iniciar Sesión";
+                errorMsg.style.display = 'block';
+            }
+        });
+
+        function iniciarLlamada() {
+            document.getElementById('toast-success').style.opacity = '0';
+            document.getElementById('main-sidebar').classList.add('collapsed');
+            document.getElementById('menu-home').classList.remove('active');
+            document.getElementById('menu-av').classList.add('active');
+
+            document.getElementById('header-action-area').innerHTML = `
+                <button class="btn-cerrar" onclick="promptLogout()">Cerrar sesión</button>
+                <div class="status-wrapper"></div>
+            `;
+            updateStatusUI('Recapitulación', '#f59e0b', '00:14');
+
+            document.getElementById('tab-home').classList.remove('active');
+            document.getElementById('tab-home').style.backgroundColor = '#e5e7eb';
+            document.getElementById('tab-home').style.color = '#6b7280';
+            document.getElementById('tab-home').style.borderTop = 'none';
+            
+            if(!document.getElementById('tab-av')) {
+                const newTab = document.createElement('div');
+                newTab.className = 'tab active';
+                newTab.id = 'tab-av';
+                newTab.innerHTML = 'Audio y vídeo <span style="color:#aaa; cursor:pointer;">×</span>';
+                document.getElementById('tab-list').appendChild(newTab);
+            }
+            
+            document.getElementById('btn-motivo').style.display = 'flex';
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('audio-video-view').style.display = 'block';
+            
+            currentCallNumber = "966310***"; 
+            
+            document.getElementById('audio-video-view').innerHTML = `
+                <div class="av-grid">
+                    <div class="av-main-panel" style="grid-column: span 1;">
+                        <div class="av-header">966310***</div>
+                        <div class="av-blank-space"></div>
+                        <div class="av-footer-stats">
+                            <span>Número de llamadas de inicio de sesión actuales: 16</span>
+                            <span>Duración promedio de llamadas: 1449</span>
+                            <span>Número de clientes en espera actuales: --</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="card">
+                            <div class="card-header">Información de la sesión</div>
+                            <div class="info-row"><div class="info-label">Llamante</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Llamado</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Número manejado</div><div class="info-val">966310***</div></div>
+                            <div class="info-row"><div class="info-label">Cola de habilidades</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">ID de llamada</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Nombre del proceso</div><div class="info-val">--</div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">Llamada de transferencia</div>
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 10px; color: #374151;">Transferir notas</div>
+                            <div style="font-size: 12px; color: #6b7280; margin-bottom: 5px;">Desde:</div>
+                            <div class="textarea-mock">Reenviar información</div>
+                        </div>
+                        <div class="card" style="flex: 1; display: flex; flex-direction: column; min-height: 250px;">
+                            <div class="card-header">Registros de contacto</div>
+                            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                                <div style="border: 1px solid #d1d5db; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #9ca3af; flex: 1; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">Tipo de medios <span>˅</span></div>
+                                <div style="border: 1px solid #d1d5db; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #374151; display: flex; justify-content: space-between; align-items: center; gap: 5px; cursor: pointer;">Más <span>˅</span></div>
+                            </div>
+                            <div style="flex: 1; display: flex; justify-content: center; align-items: center; color: #9ca3af; font-size: 12px;">No hay datos disponibles.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="card">
+                            <div class="card-header">NPS Satisfacción</div>
+                            <div class="info-row"><div class="info-label">NPS1</div><div class="info-val">0.5</div></div>
+                            <div class="info-row"><div class="info-label">NPS2</div><div class="info-val">0.67</div></div>
+                            <div class="info-row" style="margin-top: 15px;"><div class="info-label">Transferir llamadas a<br>encuesta</div><div class="info-val">13</div></div>
+                            <div class="info-row" style="margin-top: 10px;"><div class="info-label">Proporción de<br>llamadas transferidas</div><div class="info-val">81.3%</div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">Transferir registro</div>
+                            <div style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 30px; margin-bottom: 30px;">No hay datos disponibles.</div>
+                        </div>
+                        <div class="card" style="flex: 1;">
+                            <div class="card-header">Información del cliente</div>
+                            <div class="info-row"><div class="info-label">tipo de cliente</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Repetir llamadas a<br>clientes</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Nombre del cliente</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">ID de cliente</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">período de<br>facturación</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">SOT</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Resultado de<br>Aceptación de Baja</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Línea Cliente</div><div class="info-val">-- <span style="color:#aaa; cursor:pointer;">✎</span></div></div>
+                            <div class="info-row"><div class="info-label">Doc Identidad</div><div class="info-val">-- <span style="color:#aaa; cursor:pointer;" onclick="openDocModal()">✎</span></div></div>
+                            <div class="info-row">
+                                <div class="info-label">Documento Identidad<br>Type</div>
+                                <div class="info-val" style="display:flex; align-items:center; gap: 5px;">
+                                    <select style="border:none; outline:none; background:transparent; font-size:12px; color:#111827; cursor:pointer; font-weight:500;">
+                                        <option value="" disabled selected>-- ˅</option>
+                                        <option value="DNI">DNI</option>
+                                        <option value="CE">CE</option>
+                                        <option value="RUC">RUC</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="floating-toolbar"><div class="tool-icon blue">👤</div><div class="tool-icon" style="margin-top:20px;">⚙️</div></div>
+                </div>
+            `;
+        }
+
+        // ================= LLAMADA ENTRANTE =================
+        function triggerIncomingCall() {
+            updateStatusUI('Hablar', '#ef4444');
+            document.getElementById('call-control-panel').style.display = 'flex';
+            
+            let callSeconds = 0;
+            clearInterval(activeCallTimer);
+            activeCallTimer = setInterval(() => {
+                callSeconds++;
+                document.getElementById('live-call-timer').innerText = formatTime(callSeconds);
+            }, 1000);
+
+            document.getElementById('profile-name').innerText = 'Usuario De Prueba ˅';
+            
+            document.getElementById('tabs-action-buttons').innerHTML = `
+                <button class="btn-motivo" style="display:flex;">📝 Crear registro de ambos</button>
+                <button class="btn-motivo" style="display:flex;" onclick="showMotivoModal()">💬 Motivo de la llamada</button>
+            `;
+
+            isVerified = false;
+            isMotivoSaved = false;
+
+            const randomCallId = generateRandomNumber(10) + '-' + generateRandomNumber(7);
+            const skillsQueueOptions = ['SQ_RETPOST_Intenciondeportar_GEA', 'SQ_RETPOST_Postpago123_GEA'];
+            const randomSkillsQueue = skillsQueueOptions[Math.floor(Math.random() * skillsQueueOptions.length)];
+
+            let tipoSolicitud = '';
+            if (randomSkillsQueue === 'SQ_RETPOST_Intenciondeportar_GEA') {
+                tipoSolicitud = 'Intención a Portar';
+            } else {
+                const postpagoOptions = ['CANCELACION', 'MIGRACION A PREPAGO'];
+                tipoSolicitud = postpagoOptions[Math.floor(Math.random() * postpagoOptions.length)];
+            }
+
+            currentCallNumber = "966310655";
+
+            const avView = document.getElementById('audio-video-view');
+            avView.innerHTML = `
+                <div style="font-size:16px; font-weight:bold; margin-bottom:10px; padding:0 15px;">#${randomCallId}</div>
+                <div class="av-grid">
+                    <div class="av-main-panel" style="grid-column: span 1;">
+                        <div class="av-header">${currentCallNumber}</div>
+                        <div class="av-blank-space"></div>
+                        <div class="av-footer-stats">
+                            <span>Número de llamadas de inicio de sesión actuales: 1</span>
+                            <span>Duración promedio de llamadas: 3</span>
+                            <span>Número de clientes en espera actuales: --</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="card">
+                            <div class="card-header">Información de la sesión</div>
+                            <div class="info-row"><div class="info-label">Llamante</div><div class="info-val">${currentCallNumber}</div></div>
+                            <div class="info-row"><div class="info-label">Llamado</div><div class="info-val">812382</div></div>
+                            <div class="info-row"><div class="info-label">Número manejado</div><div class="info-val" style="display:flex; align-items:center; gap:5px;">${currentCallNumber} <span style="color:#aaa; cursor:pointer;">✎</span></div></div>
+                            <div class="info-row"><div class="info-label">Cola de habilidades</div><div class="info-val" style="color:#3b82f6;">${randomSkillsQueue}</div></div>
+                            <div class="info-row"><div class="info-label">Grabación de voz inteligente</div><div class="info-val" style="color:#3b82f6;">${randomSkillsQueue}</div></div>
+                            <div class="info-row"><div class="info-label">ID de llamada</div><div class="info-val">${randomCallId}</div></div>
+                            <div class="info-row"><div class="info-label">Nombre del proceso</div><div class="info-val">PeruClaro_123PreFlow</div></div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">Llamada de transferencia</div>
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 10px; color: #374151;">Transferir notas</div>
+                            <div style="font-size: 12px; display:flex; margin-bottom: 5px;">
+                                <div style="width:130px; color:#6b7280;">Desde:</div>
+                                <div style="flex:1;">Usuario De Prueba</div>
+                            </div>
+                            <div style="font-size: 12px; display:flex; margin-bottom: 5px;">
+                                <div style="width:130px; color:#6b7280;">Reenviar información</div>
+                                <div style="flex:1; line-height: 1.5;">
+                                    SN: ${randomCallId}<br>
+                                    Tipo de Solicitud: ${tipoSolicitud}<br>
+                                    Motivo de Solicitud: CUESTIONAMIENTO<br>
+                                    Nombre del titular: HECTOR ADRIAN PACHERRE TORRES<br>
+                                    DNI: 74174478<br>
+                                    Teléfono de contacto: 939370085<br>
+                                    Teléfono afectado: 966310655<br>
+                                    Acción ofrecida: MIGRACION
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="flex: 1; display:flex; flex-direction:column; gap:10px;">
+                            <div style="font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px;">Transferencia de habilidades</div>
+                            <button class="btn-transfer green"><span style="color:#10b981; margin-right:5px;">👤</span> Transferencia a Supervisor</button>
+                            
+                            <div style="font-size: 13px; font-weight: 600; color: #374151; margin-top: 10px; margin-bottom: 5px;">Transferencia de procesos</div>
+                            <button class="btn-transfer green"><span style="color:#10b981; margin-right:5px;">👤</span> Transferencia BlackList Vicio</button>
+                            <button class="btn-transfer gray" id="btn-encuesta" disabled><span style="color:#9ca3af; margin-right:5px;">🎧</span> Transferencia a Encuesta</button>
+                            <button class="btn-transfer blue"><span style="color:#3b82f6; margin-right:5px;">👥</span> Transferencia a Aceptación de Bajas</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="card">
+                            <div class="card-header">NPS Satisfacción</div>
+                            <div class="info-row"><div class="info-label">NPS1</div><div class="info-val">0.5</div></div>
+                            <div class="info-row"><div class="info-label">NPS2</div><div class="info-val">0.67</div></div>
+                            <div class="info-row" style="margin-top: 15px;"><div class="info-label">Transferir llamadas a encuesta</div><div class="info-val">13</div></div>
+                            <div class="info-row" style="margin-top: 10px;"><div class="info-label">Proporción de llamadas transferidas</div><div class="info-val">81.3%</div></div>
+                        </div>
+                        
+                        <div class="card" style="flex: 1; display:flex; flex-direction:column; gap:10px;">
+                            <div class="card-header">Transferir registro</div>
+                            <div style="border: 1px solid #f4f5f7; padding: 10px; border-radius: 6px; font-size:12px;">
+                                <div style="display:flex; margin-bottom:5px;"><div style="width:110px; color:#6b7280;">Cuenta de Agente</div><div style="font-weight:500;">E3077505</div></div>
+                                <div style="display:flex; margin-bottom:5px;"><div style="width:110px; color:#6b7280;">Nombre del agente</div><div style="font-weight:500;">Usuario De Prueba</div></div>
+                                <div style="display:flex; margin-bottom:5px;"><div style="width:110px; color:#6b7280;">Cola de habilidades:</div><div style="font-weight:500;">SQ_Postpago_BloqueoA...</div></div>
+                                <div style="display:flex;"><div style="width:110px; color:#6b7280;">Tiempo</div><div style="font-weight:500;">2026-05-09 18:37:40</div></div>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="flex: 1;">
+                            <div class="card-header">Información del cliente</div>
+                            <div class="info-row"><div class="info-label">tipo de cliente</div><div class="info-val">Postpago</div></div>
+                            <div class="info-row"><div class="info-label">Repetir llamadas a<br>clientes</div><div class="info-val">No</div></div>
+                            <div class="info-row"><div class="info-label">Nombre del cliente</div><div class="info-val">HECTOR ADRIAN PACHERRE TORRES</div></div>
+                            <div class="info-row"><div class="info-label">ID de cliente</div><div class="info-val">${currentCallNumber}</div></div>
+                            <div class="info-row"><div class="info-label">período de<br>facturación</div><div class="info-val">01</div></div>
+                            <div class="info-row"><div class="info-label">SOT</div><div class="info-val">--</div></div>
+                            <div class="info-row"><div class="info-label">Resultado de<br>Aceptación de Baja</div><div class="info-val">--</div></div>
+                            
+                            <div class="info-row"><div class="info-label">Línea Cliente</div><div class="info-val" id="val-linea" style="display:flex; align-items:center; gap: 5px;">966310655</div></div>
+                            
+                            <div class="info-row"><div class="info-label">Doc Identidad</div><div class="info-val" id="val-doc" style="display:flex; align-items:center; gap: 5px;">-- <span style="color:#aaa; cursor:pointer;" onclick="openDocModal()">✎</span></div></div>
+                            <div class="info-row">
+                                <div class="info-label">Documento Identidad<br>Type</div>
+                                <div class="info-val" style="display:flex; align-items:center; gap: 5px;">
+                                    <select style="border:none; outline:none; background:transparent; font-size:12px; color:#111827; cursor:pointer; font-weight:500;">
+                                        <option value="" disabled selected>-- ˅</option>
+                                        <option value="DNI">DNI</option>
+                                        <option value="CE">CE</option>
+                                        <option value="RUC">RUC</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="info-row" style="align-items: flex-start; margin-top: 10px;">
+                                <div class="info-label" style="display:flex; align-items:center; gap:5px;">Verificación de<br>identidad <span style="color:#aaa; cursor:pointer; font-size:14px;" onclick="openVerificacionModal()">✎</span></div>
+                                <div class="info-val" id="val-verificacion" style="color:#9ca3af; font-size:11px; flex:1;">
+                                    --
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="floating-toolbar"><div class="tool-icon blue">👤</div><div class="tool-icon" style="margin-top:20px;">⚙️</div></div>
+                </div>
+            `;
+        }
+    </script>
+
+</body>
+</html>
